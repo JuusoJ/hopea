@@ -1,0 +1,86 @@
+name: Päivitä hopea-signaali
+
+on:
+  # Metallifutuurit käyvät kauppaa su–pe. GitHubin ajastus on vähintään 5 min
+  # välein ja voi viivästyä ruuhka-aikoina, joten 15 min on realistinen tahti.
+  schedule:
+    - cron: "*/15 * * * 0-5"
+  workflow_dispatch:        # käsin ajo Actions-välilehdeltä
+  push:
+    branches: [main]
+
+permissions:
+  contents: write           # signaaliloki tallennetaan omaan data-haaraansa
+  pages: write
+  id-token: write
+
+# Ajot jonoon (ei rinnakkain eikä kesken katkaisua), jotta lokin tallennus ei törmää.
+concurrency:
+  group: hopea-signaali
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      LOKI_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Hae signaaliloki (data-haara)
+        run: |
+          if git ls-remote --exit-code --heads "$LOKI_URL" data > /dev/null 2>&1; then
+            git clone --quiet --depth 1 --branch data "$LOKI_URL" loki
+          else
+            echo "data-haaraa ei vielä ole, se luodaan ensimmäisellä tallennuksella."
+            mkdir -p loki
+            git -C loki init --quiet
+            git -C loki checkout --quiet -b data
+            git -C loki remote add origin "$LOKI_URL"
+          fi
+
+      - name: Laske indikaattorit ja rakenna sivu
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}   # valinnainen
+        run: python hopea.py --out site/index.html --json site/data.json --refresh 300 --log-dir loki
+
+      - name: Tallenna signaaliloki
+        run: |
+          cd loki
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- '*.csv'
+          if git diff --cached --quiet; then
+            echo "Ei uusia lokirivejä."
+            exit 0
+          fi
+          git commit --quiet -m "Signaaliloki $(date -u '+%Y-%m-%d %H:%M') UTC"
+          for i in 1 2 3; do
+            if git push --quiet origin HEAD:data; then
+              echo "Loki tallennettu."
+              exit 0
+            fi
+            echo "Tallennus epäonnistui, yritetään uudelleen ($i/3)."
+            sleep $((i * 5))
+            git pull --quiet --rebase origin data || { git rebase --abort 2>/dev/null || true; }
+          done
+          echo "::warning::Signaalilokin tallennus epäonnistui. Puuttuvat rivit kirjataan seuraavalla ajolla."
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

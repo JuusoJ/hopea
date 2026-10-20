@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+__REFRESH_META__
+<title>Hopea-signaali</title>
+<meta name="description" content="Hopean markkinaindikaattorit ja läpinäkyvä nousu/lasku-arvio">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a9b3c1'/%3E%3Ctext x='32' y='42' font-family='Arial' font-weight='700' font-size='28' text-anchor='middle' fill='%2312151a'%3EAg%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  try { var t = localStorage.getItem('hs-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f3f4f6; --card: #ffffff; --card2: #f7f8fa; --border: #e1e4e9;
+  --text: #12151a; --text2: #485160; --muted: #737c8a;
+  --grid: rgba(18,21,26,.07); --axis: rgba(18,21,26,.20);
+  --bull: #0f7fa3; --bear: #d03b3b; --neutral: #b9bfc8;
+  --bull-soft: rgba(15,127,163,.10); --bear-soft: rgba(208,59,59,.09); --neutral-soft: rgba(115,124,138,.10);
+  --line: #1d2530; --ema-a: #b07800; --ema-b: #6250d6; --vwap: #eb6834;
+  --band: rgba(98,80,214,.09); --bar-neutral: rgba(72,81,96,.45);
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04);
+  --radius: 14px;
+  --good: #0ca30c;
+  --zone-bull: rgba(15,127,163,.09); --zone-bull2: rgba(15,127,163,.18); --zone-bear: rgba(208,59,59,.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0d0f13; --card: #15191f; --card2: #1a1f26; --border: #252b34;
+    --text: #edf0f4; --text2: #aab3c0; --muted: #7c8594;
+    --grid: rgba(255,255,255,.06); --axis: rgba(255,255,255,.18);
+    --bull: #21a0a8; --bear: #e66767; --neutral: #4b525d;
+    --bull-soft: rgba(33,160,168,.14); --bear-soft: rgba(230,103,103,.13); --neutral-soft: rgba(124,133,148,.14);
+    --line: #dfe5ec; --ema-a: #c98500; --ema-b: #9085e9; --vwap: #d95926;
+    --band: rgba(144,133,233,.12); --bar-neutral: rgba(170,179,192,.45);
+    --zone-bull: rgba(33,160,168,.10); --zone-bull2: rgba(33,160,168,.20); --zone-bear: rgba(230,103,103,.10);
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d0f13; --card: #15191f; --card2: #1a1f26; --border: #252b34;
+  --text: #edf0f4; --text2: #aab3c0; --muted: #7c8594;
+  --grid: rgba(255,255,255,.06); --axis: rgba(255,255,255,.18);
+  --bull: #21a0a8; --bear: #e66767; --neutral: #4b525d;
+  --bull-soft: rgba(33,160,168,.14); --bear-soft: rgba(230,103,103,.13); --neutral-soft: rgba(124,133,148,.14);
+  --line: #dfe5ec; --ema-a: #c98500; --ema-b: #9085e9; --vwap: #d95926;
+  --band: rgba(144,133,233,.12); --bar-neutral: rgba(170,179,192,.45);
+  --zone-bull: rgba(33,160,168,.10); --zone-bull2: rgba(33,160,168,.20); --zone-bear: rgba(230,103,103,.10);
+  --shadow: none;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.55 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 16px 16px 48px; }
+h1, h2, h3 { margin: 0; line-height: 1.25; letter-spacing: -.01em; }
+h2 { font-size: 17px; font-weight: 650; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+a { color: inherit; text-decoration-color: var(--muted); text-underline-offset: 3px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; min-width: 0; }
+.card > h2 + .lede, .card > .head + .lede { margin-top: 4px; }
+.lede { color: var(--text2); font-size: 14px; max-width: 72ch; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--text2); margin-top: 10px; }
+.legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.legend i.dash { border-top-style: dashed; }
+.legend i.box { height: 10px; border: 0; border-radius: 2px; }
+.chart { width: 100%; margin-top: 12px; }
+.section-title { margin: 28px 0 4px; font-size: 19px; }
+
+/* Ylätunniste */
+.banner { border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
+.banner.demo { background: var(--bear-soft); border-color: transparent; }
+.banner.warn { background: var(--neutral-soft); border-color: transparent; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.mark { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; font-weight: 700; font-size: 16px;
+  color: #12151a; background: linear-gradient(145deg, #e9edf2, #a9b3c1 55%, #d7dde5); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.brand .title { font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+.iconbtn { border: 1px solid var(--border); background: var(--card); color: var(--text2); border-radius: 10px;
+  height: 36px; padding: 0 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.iconbtn:hover { color: var(--text); }
+
+/* Yläosan ruudukko */
+.top-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 960px) { .top-grid { grid-template-columns: minmax(280px, 1fr) 2fr; } }
+@media (max-width: 959px) { .top-grid .hero { order: -1; } }
+
+.price .label { font-size: 13px; color: var(--muted); font-weight: 500; }
+.price .big { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
+.price .big b { font-size: 40px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.price .unit { color: var(--muted); font-size: 15px; }
+.chg { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 600; font-size: 15px; }
+.chg .ic.up { color: var(--bull); } .chg .ic.down { color: var(--bear); }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px; }
+.kv dt { color: var(--text2); } .kv dd { margin: 0; text-align: right; font-weight: 600; }
+.kv .note { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; margin-top: -2px; }
+
+/* Tuomio */
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.verdict { font-size: 28px; font-weight: 700; margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.verdict .ic { font-size: 22px; }
+.verdict.bull .ic { color: var(--bull); } .verdict.bear .ic { color: var(--bear); } .verdict.neutral .ic { color: var(--muted); }
+.sigbadge { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; border: 1.5px solid currentColor; }
+.verdict.bull .sigbadge { color: var(--bull); } .verdict.bear .sigbadge { color: var(--bear); }
+.probs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 18px; }
+.prob .pl { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text2); font-weight: 500; }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.sw.bull { background: var(--bull); } .sw.bear { background: var(--bear); } .sw.neutral { background: var(--neutral); }
+.prob .pv { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+.prob.dim .pv { color: var(--text2); font-weight: 600; }
+.pbar { position: relative; height: 16px; border-radius: 8px; display: flex; gap: 2px; margin-top: 14px; overflow: visible; }
+.pbar .seg { height: 100%; min-width: 0; }
+.pbar .seg:first-child { border-radius: 8px 0 0 8px; } .pbar .seg:last-child { border-radius: 0 8px 8px 0; }
+.seg.bull { background: var(--bull); } .seg.bear { background: var(--bear); } .seg.neutral { background: var(--neutral); }
+.tick { position: absolute; top: -5px; bottom: -5px; width: 0; border-left: 2px dashed var(--text); opacity: .55; }
+.ticklabels { position: relative; height: 18px; margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+.ticklabels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.summary { margin-top: 16px; font-size: 15px; }
+.history { margin-top: 10px; font-size: 14px; color: var(--text2); padding: 10px 12px; background: var(--card2); border-radius: 10px; }
+.caveat { margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+
+/* Toinen rivi */
+.row2 { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 16px; }
+@media (min-width: 1040px) { .row2 { grid-template-columns: 2fr 1fr; } }
+
+/* Indikaattorikortit */
+.grid { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 14px; }
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+.ind { display: flex; flex-direction: column; gap: 10px; }
+.ind.na { opacity: .6; }
+.ind-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.grp { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+.w { font-size: 12px; color: var(--text2); background: var(--card2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.ind-val { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ind-val .v { font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+.ind-val .s { font-size: 13px; color: var(--text2); }
+.pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600;
+  padding: 4px 10px; border-radius: 999px; background: var(--neutral-soft); }
+.pill.bull { background: var(--bull-soft); } .pill.bear { background: var(--bear-soft); }
+.pill .ic { font-size: 11px; } .pill.bull .ic { color: var(--bull); } .pill.bear .ic { color: var(--bear); } .pill.neutral .ic, .pill.na .ic { color: var(--muted); }
+.meter { position: relative; height: 8px; border-radius: 4px; background: var(--card2); border: 1px solid var(--border); }
+.meter .mid { position: absolute; left: 50%; top: -4px; bottom: -4px; border-left: 1.5px solid var(--axis); }
+.meter .fill { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.meter .fill.bull { background: var(--bull); } .meter .fill.bear { background: var(--bear); } .meter .fill.neutral { background: var(--neutral); }
+.meter .dot { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--card); border: 3px solid var(--muted); }
+.meter .dot.bull { border-color: var(--bull); } .meter .dot.bear { border-color: var(--bear); }
+.meter-scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-top: -4px; }
+.meter-scale .sv { color: var(--text2); font-weight: 600; }
+.mini { height: 104px; margin: 0 -4px; }
+.now { font-size: 14px; }
+details { font-size: 13.5px; color: var(--text2); }
+details summary { cursor: pointer; color: var(--text2); font-weight: 500; list-style: none; display: inline-flex; align-items: center; gap: 6px; }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: "＋"; font-size: 12px; color: var(--muted); }
+details[open] summary::before { content: "－"; }
+details > p { margin-top: 8px; }
+code, .formula { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+.formula { background: var(--card2); border-radius: 8px; padding: 8px 10px; color: var(--text2); overflow-wrap: anywhere; }
+
+/* Taulukot */
+.tablewrap { overflow-x: auto; margin-top: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 600; font-size: 12.5px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td.num, th.num { text-align: right; }
+tr.cur td { background: var(--card2); font-weight: 600; }
+tr.total td { font-weight: 700; border-bottom: 0; }
+.hitbar { display: inline-block; width: 56px; height: 6px; border-radius: 3px; background: var(--card2); border: 1px solid var(--border); vertical-align: middle; margin-left: 8px; position: relative; overflow: hidden; }
+.hitbar b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; }
+.hitbar .b50 { position: absolute; left: 50%; top: -1px; bottom: -1px; border-left: 1px solid var(--axis); }
+.nowtag { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text2); margin-left: 6px; }
+.callout { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--card2); font-size: 14px; color: var(--text2); border-left: 3px solid var(--axis); }
+.formula-big { margin-top: 12px; font-size: 14px; line-height: 1.9; background: var(--card2); border-radius: 10px; padding: 12px 14px; }
+.gsr-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); margin-top: 4px; }
+@media (min-width: 1040px) { .gsr-grid { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); } }
+.zones { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+.zone { display: grid; grid-template-columns: 14px 1fr; gap: 10px; padding: 8px 10px; border-radius: 10px; }
+.zone.cur { background: var(--card2); box-shadow: inset 0 0 0 1px var(--border); }
+.zsw { width: 14px; height: 14px; border-radius: 4px; margin-top: 3px; border: 1px solid var(--border); }
+.zsw.bull { background: var(--zone-bull); border-color: color-mix(in srgb, var(--bull) 45%, transparent); }
+.zsw.bull2 { background: var(--zone-bull2); border-color: color-mix(in srgb, var(--bull) 70%, transparent); }
+.zsw.bear { background: var(--zone-bear); border-color: color-mix(in srgb, var(--bear) 45%, transparent); }
+.zone .zr { font-size: 14px; } .zone .zr b { font-variant-numeric: tabular-nums; }
+.zone p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.calcbox { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+ol.calc { margin: 10px 0 0; padding-left: 22px; display: grid; gap: 8px; font-size: 14.5px; }
+ol.calc li::marker { color: var(--muted); font-weight: 600; }
+.whatif { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--card2); font-size: 14.5px; border-left: 3px solid var(--bull); }
+/* Aikajännepaneelit */
+.hz-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); margin-top: 12px; }
+@media (min-width: 720px) { .hz-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.hz { border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--card); min-width: 0; }
+.hz.signal.bull { box-shadow: inset 0 0 0 2px var(--bull); } .hz.signal.bear { box-shadow: inset 0 0 0 2px var(--bear); }
+.hz.na { opacity: .6; }
+.hz-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.hz-top b { font-size: 15px; } .hz-top span { font-size: 12.5px; color: var(--muted); }
+.hz-verdict { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; line-height: 1.25; flex-wrap: wrap; }
+.hz-verdict .ic { font-size: 14px; }
+.hz.bull .hz-verdict .ic { color: var(--bull); } .hz.bear .hz-verdict .ic { color: var(--bear); } .hz.neutral .hz-verdict .ic { color: var(--muted); }
+.hz.bull .sigbadge { color: var(--bull); } .hz.bear .sigbadge { color: var(--bear); }
+.hz-nums { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text2); }
+.hz-nums span { display: inline-flex; align-items: center; gap: 5px; } .hz-nums .key { color: var(--text); font-weight: 700; }
+.hz-nums .sw { width: 9px; height: 9px; }
+.pbar.sm { height: 10px; margin-top: 0; } .pbar.sm .tick { top: -4px; bottom: -4px; }
+.hz-thr { font-size: 12.5px; color: var(--muted); margin-top: -4px; }
+.hz-prob { background: var(--card2); border-radius: 10px; padding: 10px 12px; }
+.hz-prob .lbl { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.hz-prob .pv { font-size: 26px; font-weight: 700; letter-spacing: -.02em; display: flex; align-items: center; gap: 6px; line-height: 1.2; }
+.hz-prob .pv .ic { font-size: 14px; } .hz-prob .pv.up .ic { color: var(--bull); } .hz-prob .pv.dn .ic { color: var(--bear); }
+.hz-prob .sub { font-size: 12.5px; color: var(--text2); }
+.flag { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 600; color: var(--text2); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+.flag.bad { color: var(--bear); border-color: color-mix(in srgb, var(--bear) 50%, transparent); }
+.hz-sum { font-size: 13px; color: var(--text2); }
+/* Välilehdet */
+.seg-ctl { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--card2); border: 1px solid var(--border); margin-top: 10px; max-width: 100%; overflow-x: auto; }
+.seg-ctl button { font: inherit; font-size: 13px; font-weight: 500; color: var(--text2); background: none; border: 0; border-radius: 7px; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
+.seg-ctl button.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.seg-ctl button:disabled { opacity: .4; cursor: default; }
+.wchips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.calib { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--card2); font-size: 14.5px; }
+.calib:empty { display: none; }
+.calib p + p { margin-top: 6px; }
+/* Seuranta */
+.tk-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); margin-top: 14px; }
+@media (min-width: 720px) { .tk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tk { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.tk-h { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.tk-v { font-size: 22px; font-weight: 700; margin-top: 4px; }
+.tk-s { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.dl { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.dl a { font-size: 13.5px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; text-decoration: none; background: var(--card2); }
+.dl a:hover { border-color: var(--text2); }
+.mark-ok { color: var(--good); font-weight: 700; } .mark-no { color: var(--bear); font-weight: 700; }
+.stack { display: grid; gap: 16px; margin-top: 16px; grid-template-columns: minmax(0, 1fr); }
+.btsum { display: grid; gap: 10px; margin-top: 14px; }
+.btsum .item { padding: 12px 14px; border-radius: 10px; background: var(--card2); font-size: 14.5px; border-left: 3px solid var(--axis); }
+.btsum .item.bull { border-left-color: var(--bull); } .btsum .item.bear { border-left-color: var(--bear); }
+.btsum .item b.tag { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 3px; }
+.btsum .base { font-size: 13.5px; color: var(--text2); }
+table.bt td { vertical-align: middle; }
+.ud { display: inline-flex; gap: 12px; align-items: baseline; }
+.ud span { color: var(--text2); } .ud span.key { color: var(--text); font-weight: 700; }
+.ud .a-up { color: var(--bull); font-size: 10px; } .ud .a-dn { color: var(--bear); font-size: 10px; }
+.splitbar { display: flex; gap: 2px; width: 120px; height: 6px; margin-top: 5px; }
+.splitbar b { height: 100%; } .splitbar b:first-child { border-radius: 3px 0 0 3px; } .splitbar b:last-child { border-radius: 0 3px 3px 0; }
+.splitbar .u { background: var(--bull); } .splitbar .d { background: var(--bear); }
+.verd { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.verd .vi { font-size: 13px; width: 16px; text-align: center; }
+.verd.yes .vi { color: var(--good); } .verd.no .vi { color: var(--bear); }
+.verd.weak .vi, .verd.few .vi, .verd.ref .vi, .verd.none .vi { color: var(--muted); }
+.verd.few, .verd.ref, .verd.none { color: var(--muted); font-weight: 500; }
+.chgv .a-up { color: var(--bull); font-size: 10px; } .chgv .a-dn { color: var(--bear); font-size: 10px; }
+@media (max-width: 640px) {
+  table.bt thead { display: none; }
+  table.bt, table.bt tbody { display: block; width: 100%; }
+  table.bt tr { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 12px 8px; border-bottom: 1px solid var(--border); }
+  table.bt td { display: block; border: 0; padding: 0; white-space: normal; }
+  table.bt td.c-lab { font-weight: 600; }
+  table.bt td.c-n { text-align: right; color: var(--text2); }
+  table.bt td.c-n::after { content: " " attr(data-u); }
+  table.bt td.c-ud { grid-column: 1 / -1; }
+  table.bt td.c-chg { text-align: left; color: var(--text2); }
+  table.bt td.c-chg::before { content: "keskim. muutos "; color: var(--muted); font-size: 12.5px; }
+  table.bt td.c-ver { text-align: right; }
+  table.bt tr.cur { border-radius: 10px; background: var(--card2); }
+  table.bt tr.cur td { background: none; }
+  table.bt tr.empty td.c-ud, table.bt tr.empty td.c-chg { display: none; }
+  .splitbar { width: 100%; max-width: 260px; }
+}
+.cols2 { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 16px; }
+@media (min-width: 1040px) { .cols2 { grid-template-columns: 1fr 1fr; } }
+ul.formulas { margin: 10px 0 0; padding-left: 18px; color: var(--text2); font-size: 13.5px; }
+ul.formulas li { margin: 6px 0; }
+footer { margin-top: 28px; font-size: 13px; color: var(--text2); }
+footer ul { padding-left: 18px; margin: 8px 0 14px; }
+.disclaimer { color: var(--muted); font-size: 12.5px; margin-top: 10px; max-width: 80ch; }
+.nochart { color: var(--muted); font-size: 13px; padding: 16px 0; }
+@media (max-width: 520px) {
+  .card { padding: 16px; }
+  .price .big b { font-size: 34px; }
+  .verdict { font-size: 23px; }
+  .prob .pv { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="banners"></div>
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">Ag</div>
+      <div>
+        <div class="title">Hopea-signaali</div>
+        <div class="muted small" id="updated"></div>
+      </div>
+    </div>
+    <button class="iconbtn" id="themeBtn" type="button" aria-label="Vaihda vaalea/tumma teema">◐ Teema</button>
+  </header>
+
+  <div class="top-grid">
+    <section class="card price" aria-label="Hopean hinta">
+      <div class="label">Hopea · COMEX-futuuri</div>
+      <div class="big"><b id="px"></b><span class="unit">$ / unssi</span></div>
+      <div class="chg" id="chg"></div>
+      <dl class="kv" id="pricekv"></dl>
+    </section>
+
+    <section class="card hero" aria-label="Indikaattorien yhteistulos">
+      <div class="head"><h1 class="eyebrow" style="font-size:12px;margin:0">Indikaattorien kallistuma nyt · kolme aikajännettä</h1><span class="muted small" id="thLabel"></span></div>
+      <div class="hz-grid" id="hzPanels"></div>
+      <p class="caveat"><b>Nousu / neutraali / lasku</b> kertoo, kuinka yksimielisiä mittarit ovat. <b>Historiallinen todennäköisyys</b> kertoo, kuinka usein vastaava lukema on oikeasti osunut. Se on luku, johon päätökset kannattaa perustaa. Lisää kohdissa <a href="#historia">Toteutuiko?</a> ja <a href="#seuranta">Seuranta</a>.</p>
+    </section>
+  </div>
+
+  <div class="row2">
+    <section class="card" aria-label="Päivänsisäinen kaavio">
+      <div class="head"><h2>Päivänsisäinen kuva</h2><span class="muted small" id="intraTime"></span></div>
+      <p class="lede">15 minuutin kynttilät. Turkoosi kynttilä = hinta nousi jakson aikana, punainen = laski. VWAP on vuorokauden volyymipainotettu keskihinta: sen yläpuolella ostajat ovat niskan päällä.</p>
+      <div id="ch-intraday" class="chart"></div>
+      <div class="legend">
+        <span><i style="border-color:var(--ema-a)"></i>EMA 9 (nopea)</span>
+        <span><i style="border-color:var(--ema-b)"></i>EMA 21 (hidas)</span>
+        <span><i class="dash" style="border-color:var(--vwap)"></i>VWAP</span>
+      </div>
+    </section>
+    <section class="card" aria-label="Vaikutukset">
+      <h2>Mikä painaa vaakaa</h2>
+      <div class="seg-ctl" id="tabsContrib" role="tablist" aria-label="Aikajänne"></div>
+      <p class="lede">Jokaisen mittarin osuus lopputuloksesta prosenttiyksikköinä: paino × pistemäärä. Oikealle = nousua, vasemmalle = laskua.</p>
+      <div id="ch-contrib" class="chart"></div>
+    </section>
+  </div>
+
+  <h2 class="section-title">Indikaattorit</h2>
+  <p class="lede">Kymmenen mittaria, joista jokainen antaa pistemäärän väliltä −1 (vahvasti laskua) … +1 (vahvasti nousua). Kortin kulmassa näkyy, mihin aikajänteisiin mittari kuuluu ja millä painolla.</p>
+  <div class="grid" id="cards"></div>
+
+  <section class="card" style="margin-top:16px" aria-label="Hopea ja signaalihistoria">
+    <div class="head"><h2>Hopea ja mallin lukemat päivittäin</h2><span class="muted small" id="dailyHz"></span></div>
+    <p class="lede">Ylhäällä hopean päätöskurssi liukuvine keskiarvoineen. Alhaalla mallin lukema samana päivänä valitulla aikajänteellä: pylväs ylös = nousuprosentti, alas = laskuprosentti. Katkoviiva on {TH} %:n signaaliraja.</p>
+    <div id="ch-daily" class="chart"></div>
+    <div class="legend">
+      <span><i style="border-color:var(--line)"></i>Hopea</span>
+      <span><i style="border-color:var(--ema-a)"></i>20 pv keskiarvo</span>
+      <span><i style="border-color:var(--ema-b)"></i>50 pv keskiarvo</span>
+      <span><i class="box" style="background:var(--bull)"></i>Nousu %</span>
+      <span><i class="box" style="background:var(--bear)"></i>Lasku %</span>
+    </div>
+  </section>
+
+  <div class="stack">
+    <section class="card" id="gsr" aria-label="Kulta-hopea-suhde">
+      <div class="head"><h2>Kulta–hopea-suhde</h2><span class="muted small" id="gsrNow"></span></div>
+      <p class="lede">Montako unssia hopeaa saa yhdellä kultaunssilla. Taustaväri näyttää pitkän historian mittakaavan: punertava = hopea kallista kultaan nähden, turkoosi = hopea halpaa. Malli itse vertaa suhdetta sen kolmen vuoden keskiarvoon (katkoviiva), koska ”normaali” taso vaihtelee vuosikymmenestä toiseen.</p>
+      <div class="gsr-grid">
+        <div>
+          <div id="ch-gsr" class="chart"></div>
+          <div class="legend">
+            <span><i style="border-color:var(--line)"></i>Kulta / hopea</span>
+            <span><i class="dash" style="border-color:var(--ema-b)"></i>3 v keskiarvo (mallin vertailukohta)</span>
+          </div>
+        </div>
+        <div class="zones" id="gsrZones" aria-label="Suhteen tulkinta"></div>
+      </div>
+      <div class="calcbox" id="gsrCalcBox">
+        <h3>Laskuesimerkki tämän päivän luvuilla</h3>
+        <ol class="calc" id="gsrCalc"></ol>
+        <p class="whatif" id="gsrWhatIf"></p>
+      </div>
+    </section>
+
+    <section class="card" id="historia" aria-label="Historiallinen osumatarkkuus">
+      <h2>Toteutuiko? Historiallinen osumatarkkuus</h2>
+      <div class="seg-ctl" id="tabsBt" role="tablist" aria-label="Aikajänne"></div>
+      <p class="lede" id="btLede"></p>
+      <div class="calib" id="btCalib"></div>
+      <div class="btsum" id="btSummary"></div>
+      <div class="tablewrap"><table id="btTable" class="bt"></table></div>
+      <p class="caveat" id="btNote"></p>
+    </section>
+
+    <section class="card" id="seuranta" aria-label="Seuranta">
+      <h2>Seuranta: oikeat ennusteet</h2>
+      <p class="lede">Historiatesti kertoo, miten malli <i>olisi</i> toiminut. Tämä osio kertoo, miten se on <i>oikeasti</i> toiminut: jokainen ennuste kirjataan lokiin ennen kuin tulos tiedetään, eikä kirjattua ennustetta muuteta jälkikäteen.</p>
+      <div id="trackBody"></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:16px" aria-label="Laskentakaava">
+    <h2>Näin prosentit lasketaan</h2>
+    <div class="seg-ctl" id="tabsFormula" role="tablist" aria-label="Aikajänne"></div>
+    <p class="lede">Laskenta on tarkoituksella yksinkertainen, jotta jokaisen luvun voi tarkistaa käsin. Jokaisella aikajänteellä on omat mittarinsa ja painonsa.</p>
+    <div class="formula-big">
+      Jokainen mittari <b>i</b> antaa pistemäärän <b>sᵢ</b> väliltä −1…+1 ja sillä on paino <b>wᵢ</b> (painot yhteensä 100 %).<br>
+      <b>Nousu</b> = Σ wᵢ · max(sᵢ, 0) &nbsp;·&nbsp; <b>Lasku</b> = Σ wᵢ · max(−sᵢ, 0) &nbsp;·&nbsp; <b>Neutraali</b> = Σ wᵢ · (1 − |sᵢ|)
+    </div>
+    <p class="lede" style="margin-top:10px">Eli jokainen mittari jakaa oman painonsa kolmeen koriin sen mukaan, kuinka vahvasti se on jommallakummalla kannalla. Täysin varma mittari (s = ±1) antaa koko painonsa nousulle tai laskulle, epävarma (s ≈ 0) neutraalille. Korit ovat yhteensä aina 100 %. Jos jonkin mittarin data puuttuu, muiden painot skaalataan uudelleen.</p>
+    <div class="tablewrap"><table id="fTable"></table></div>
+    <h3 style="margin-top:20px">Yksimielisyydestä todennäköisyydeksi</h3>
+    <p class="lede" style="margin-top:6px">Mittarit mittaavat osin samaa asiaa (esimerkiksi dollari, reaalikorko ja kulta liikkuvat usein yhdessä), joten niiden yksimielisyys liioittelee varmuutta. Siksi nettolukema <b>x = nousu − lasku</b> muunnetaan todennäköisyydeksi kaavalla, jonka kaksi lukua <b>a</b> ja <b>b</b> on sovitettu siihen, mitä historiassa oikeasti tapahtui (logistinen regressio). Jos <b>b</b> on positiivinen, nousulukema on ennakoinut nousua.</p>
+    <div class="formula-big" id="fCalib"></div>
+    <details style="margin-top:14px">
+      <summary>Mittarikohtaiset kaavat</summary>
+      <p>Merkintä <code>z(x)</code> tarkoittaa lukua suhteutettuna sen tavanomaiseen vaihteluun (jaettuna viimeisen vuoden keskihajonnalla), joten eri mittarit ovat vertailukelpoisia. <code>tanh</code> puristaa minkä tahansa luvun pehmeästi välille −1…+1: tanh(0,5) ≈ 0,46 · tanh(1) ≈ 0,76 · tanh(2) ≈ 0,96.</p>
+      <ul class="formulas" id="fList"></ul>
+    </details>
+  </section>
+
+  <footer>
+    <h2 style="font-size:15px">Datalähteet ja tuoreus</h2>
+    <ul id="sources"></ul>
+    <p id="genline"></p>
+    <p class="disclaimer">Tämä sivu on laskennallinen apuväline, ei sijoitusneuvontaa. Indikaattorit kuvaavat menneitä ja nykyisiä markkinaoloja; ne eivät takaa tulevaa hintakehitystä. Hopea on erittäin volatiili ja vipuun perustuvat tuotteet voivat menettää arvonsa nopeasti.</p>
+  </footer>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js" charset="utf-8"></script>
+<script>
+(function () {
+  'use strict';
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var num = function (x, d, sign) {
+    if (x == null || !isFinite(x)) return '–';
+    var s = Math.abs(x).toFixed(d == null ? 2 : d).replace('.', ',');
+    return (x < 0 ? '−' : (sign ? '+' : '')) + s;
+  };
+  var pctInt = function (x) { return Math.round(x * 100) + ' %'; };
+  var TH = D.meta.threshold, ICON = { bull: '▲', bear: '▼', neutral: '●', na: '○' };
+
+  // Pyöristys niin, että kolme lukua summautuvat tasan 100:aan
+  function round100(arr) {
+    var raw = arr.map(function (v) { return v * 100; }), fl = raw.map(Math.floor);
+    var left = 100 - fl.reduce(function (a, b) { return a + b; }, 0);
+    raw.map(function (v, i) { return [v - fl[i], i]; }).sort(function (a, b) { return b[0] - a[0]; })
+      .slice(0, left).forEach(function (p) { fl[p[1]]++; });
+    return fl;
+  }
+
+  /* ---------- Bannerit, ylätunniste, hinta ---------- */
+  var ban = '';
+  if (D.meta.demo) ban += '<div class="banner demo"><b>DEMO-tila:</b> sivulla on keksittyä dataa ulkoasun testaamiseen. Aja ohjelma ilman <code>--demo</code>-valitsinta saadaksesi oikeat markkinatiedot.</div>';
+  if (D.meta.errors && D.meta.errors.length) ban += '<div class="banner warn"><b>Osa datasta puuttuu tältä ajokerralta:</b> ' + D.meta.errors.map(esc).join(' · ') + '. Puuttuvien mittarien painot on jaettu muille.</div>';
+  $('#banners').innerHTML = ban;
+  $('#updated').textContent = 'Päivitetty ' + D.meta.generated;
+
+  var P = D.price;
+  $('#px').textContent = P.usd;
+  $('#chg').innerHTML = '<span class="ic ' + (P.up ? 'up' : 'down') + '">' + (P.up ? '▲' : '▼') + '</span>' +
+    esc(P.chg_abs) + ' $ (' + esc(P.chg) + ')<span class="muted small" style="font-weight:400">&nbsp;edellisestä päätöksestä</span>';
+  var kv = '';
+  if (P.eur) kv += '<dt>Euroissa</dt><dd>' + esc(P.eur) + ' € / unssi</dd><dt>Kilohinta</dt><dd>≈ ' + esc(P.eur_kg) + ' € / kg</dd>';
+  kv += '<dt>Tyypillinen päiväliike</dt><dd>± ' + esc(P.atr) + ' $ (' + esc(P.atr_pct) + ')</dd>';
+  kv += '<div class="note">Heilunta on nyt <b>' + esc(P.vol_label) + '</b> vuoden mittakaavassa (ATR 14 pv). Hyödyllinen stop-tasojen mitoitukseen.</div>';
+  if (P.time) kv += '<dt>Viimeisin hinta</dt><dd>' + esc(P.time) + '</dd>';
+  $('#pricekv').innerHTML = kv;
+
+  /* ---------- Aikajänteet ---------- */
+  var HS = D.horizons, HBY = {};
+  HS.forEach(function (h) { HBY[h.key] = h; });
+  var state = { h: (HBY[D.meta.main] && HBY[D.meta.main].available) ? D.meta.main : HS.filter(function (h) { return h.available; }).map(function (h) { return h.key; })[0] };
+  try { var sh = localStorage.getItem('hs-horizon'); if (sh && HBY[sh] && HBY[sh].available) state.h = sh; } catch (e) {}
+  $('#thLabel').textContent = 'Signaaliraja ' + Math.round(TH * 100) + ' %';
+
+  function probBlock(h) {
+    var c = h.calib;
+    if (!c) return '<div class="hz-prob"><div class="lbl">Historiallinen todennäköisyys</div><div class="sub">Ei voitu laskea: historiaa on liian vähän.</div></div>';
+    var up = c.p >= 0.5, pr = up ? c.p : 1 - c.p, lo = up ? c.lo : 1 - c.hi, hi = up ? c.hi : 1 - c.lo, base = up ? c.base : 1 - c.base;
+    var flag = c.relation === 'pos' ? '' : c.relation === 'neg' ? '<div class="flag bad">Toiminut historiassa päinvastoin</div>' : '<div class="flag">Ei tilastollisesti merkitsevä</div>';
+    return '<div class="hz-prob"><div class="lbl">Historiallinen todennäköisyys</div>' +
+      '<div class="pv ' + (up ? 'up' : 'dn') + '"><span class="ic">' + (up ? '▲' : '▼') + '</span>' + Math.round(pr * 100) + ' %</div>' +
+      '<div class="sub">hinta ' + (up ? 'korkeammalla' : 'matalammalla') + ' ' + esc(h.ahead_short) + ' päästä · tavallisesti ' + Math.round(base * 100) +
+      ' % (ero ' + num((pr - base) * 100, 0, true) + ' %-yks) · 90 %:n väli ' + Math.round(lo * 100) + '–' + Math.round(hi * 100) + ' %</div>' + flag + '</div>';
+  }
+  function pbarHtml(r, cls) {
+    return '<div class="pbar ' + (cls || '') + '" role="img" aria-label="Nousu ' + r[0] + ' %, neutraali ' + r[1] + ' %, lasku ' + r[2] + ' %">' +
+      [['bull', r[0], 'Nousu'], ['neutral', r[1], 'Neutraali'], ['bear', r[2], 'Lasku']].map(function (x) {
+        return x[1] > 0 ? '<div class="seg ' + x[0] + '" style="width:' + x[1] + '%" title="' + x[2] + ' ' + x[1] + ' %"></div>' : '';
+      }).join('') + '<div class="tick" style="left:' + (TH * 100) + '%"></div><div class="tick" style="left:' + ((1 - TH) * 100) + '%"></div></div>';
+  }
+  $('#hzPanels').innerHTML = HS.map(function (h) {
+    if (!h.available) return '<div class="hz na"><div class="hz-top"><b>' + esc(h.name) + '</b><span>' + esc(h.span) + '</span></div><p class="small muted">Dataa ei saatu tällä ajokerralla.</p></div>';
+    var r = round100([h.bull, h.neutral, h.bear]);
+    var thr = h.signal ? '<b>Signaaliraja ylittyy</b>: lähes kaikki mittarit ovat samaa mieltä.' :
+      'Signaalirajaan ' + Math.round(TH * 100) + ' % on ' + Math.round(h.to_threshold * 100) + ' %-yks.';
+    return '<div class="hz ' + h.tone + (h.signal ? ' signal' : '') + '">' +
+      '<div class="hz-top"><b>' + esc(h.name) + '</b><span>' + esc(h.span) + '</span></div>' +
+      '<div class="hz-verdict"><span class="ic">' + ICON[h.tone] + '</span><span>' + esc(h.label) + '</span>' + (h.signal ? '<span class="sigbadge">Signaali</span>' : '') + '</div>' +
+      '<div class="hz-nums"><span class="' + (h.bull >= h.bear ? 'key' : '') + '"><i class="sw bull"></i>Nousu ' + r[0] + ' %</span>' +
+      '<span><i class="sw neutral"></i>Neutr. ' + r[1] + ' %</span>' +
+      '<span class="' + (h.bear > h.bull ? 'key' : '') + '"><i class="sw bear"></i>Lasku ' + r[2] + ' %</span></div>' +
+      pbarHtml(r, 'sm') + '<div class="hz-thr">' + thr + '</div>' + probBlock(h) +
+      '<p class="hz-sum">' + esc(h.summary) + '</p></div>';
+  }).join('');
+
+  /* Välilehdet: kaikki aikajännevalitsimet ovat synkronissa */
+  function buildTabs(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = HS.map(function (h) {
+      return '<button type="button" role="tab" data-h="' + h.key + '"' + (h.available ? '' : ' disabled') + '>' + esc(h.name) + ' <span class="muted">· ' + esc(h.ahead_short) + '</span></button>';
+    }).join('');
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-h]');
+      if (b && !b.disabled && b.dataset.h !== state.h) setH(b.dataset.h);
+    });
+  }
+  ['tabsContrib', 'tabsBt', 'tabsFormula'].forEach(buildTabs);
+  function syncTabs() {
+    document.querySelectorAll('.seg-ctl button').forEach(function (b) {
+      var on = b.dataset.h === state.h;
+      b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+  function setH(k) {
+    state.h = k;
+    try { localStorage.setItem('hs-horizon', k); } catch (e) {}
+    renderH();
+    if (window.Plotly) { var t = T(); try { drawContrib(t); } catch (e) { console.error(e); } try { drawDaily(t); } catch (e) { console.error(e); } }
+  }
+  function renderH() { syncTabs(); renderBacktest(); renderFormula(); }
+
+  /* ---------- Indikaattorikortit ---------- */
+  function meter(s) {
+    if (s == null) return '<div class="meter"><div class="mid"></div></div><div class="meter-scale"><span>▼ lasku</span><span class="sv">ei dataa</span><span>nousu ▲</span></div>';
+    var pos = (s + 1) / 2 * 100, left = Math.min(50, pos), width = Math.abs(pos - 50);
+    var tone = s > 0.15 ? 'bull' : s < -0.15 ? 'bear' : 'neutral';
+    return '<div class="meter" role="img" aria-label="Pistemäärä ' + num(s, 2, true) + '"><div class="fill ' + tone + '" style="left:' + left + '%;width:' + width + '%"></div><div class="mid"></div><div class="dot ' + tone + '" style="left:' + pos + '%"></div></div>' +
+      '<div class="meter-scale"><span>▼ lasku</span><span class="sv">s = ' + num(s, 2, true) + '</span><span>nousu ▲</span></div>';
+  }
+  $('#cards').innerHTML = D.indicators.map(function (c) {
+    var chips = c.weights.map(function (w) { return '<span class="w" title="Paino aikajänteellä ' + esc(w.name) + '">' + esc(w.name) + ' ' + Math.round(w.w * 100) + ' %</span>'; }).join('');
+    return '<article class="card ind' + (c.available ? '' : ' na') + '">' +
+      '<div class="ind-head"><div><div class="grp">' + esc(c.group) + '</div><h3>' + esc(c.name) + '</h3></div>' +
+      '<div class="wchips">' + chips + '</div></div>' +
+      '<div class="ind-val"><span class="v">' + esc(c.value) + '</span><span class="s">' + esc(c.sub) + '</span></div>' +
+      '<div class="pill ' + c.tone + '"><span class="ic">' + ICON[c.tone] + '</span>' + esc(c.effect) + '</div>' +
+      meter(c.score) +
+      '<div class="mini" id="mini-' + c.key + '"></div>' +
+      '<p class="now">' + esc(c.now) + (c.asof ? ' <span class="muted">(tieto ' + esc(c.asof) + ')</span>' : '') + '</p>' +
+      '<details><summary>Mitä tämä mittaa?</summary><p>' + esc(c.what) + '</p><p class="formula">' + esc(c.formula) + '</p></details>' +
+      '</article>';
+  }).join('');
+
+  /* ---------- Historiatesti + kalibrointi (valittu aikajänne) ---------- */
+  function renderBacktest() {
+    var H = HBY[state.h], B = H && H.backtest, c = H && H.calib;
+    if (!H || !H.available) return;
+    var cal = '';
+    if (c) {
+      var x85 = TH, extra = c.x_max < x85 ? ' Näin vahvaa nousulukemaa ei ole historiassa esiintynyt (suurin nettolukema ' + num(c.x_max, 2, true) + '), joten luku on mallin arvio eikä toteutunut osuma.' : '';
+      cal = '<div class="eyebrow">Kalibroitu todennäköisyys nyt</div><p>' + esc(H.calib_text) + '</p>' +
+        '<p class="small" style="color:var(--text2)"><b>Mitä ' + Math.round(TH * 100) + ' %:n signaaliraja on tarkoittanut?</b> Kun mittarit ovat olleet ' + Math.round(TH * 100) +
+        ' % nousun kannalla, hinta on ollut ' + esc(H.ahead) + ' korkeammalla noin ' + Math.round(c.p_bull85 * 100) + ' %:ssa kerroista. Kun ne ovat olleet ' +
+        Math.round(TH * 100) + ' % laskun kannalla, hinta on ollut matalammalla noin ' + Math.round((1 - c.p_bear85) * 100) + ' %:ssa kerroista.' + extra + '</p>';
+    }
+    $('#btCalib').innerHTML = cal;
+    if (!B || !B.ok) {
+      $('#btLede').textContent = 'Historiatestiä ei voitu laskea tälle aikajänteelle (liian vähän dataa).';
+      $('#btSummary').innerHTML = ''; $('#btTable').innerHTML = ''; $('#btNote').innerHTML = '';
+      return;
+    }
+    $('#btLede').textContent = 'Jokaiselta havainnolta ' + B.since + ' alkaen (' + B.n.toLocaleString('fi-FI') + ' ' + B.unit +
+      ') on katsottu, mitä malli näytti ja mihin hopean hinta oli ' + H.ahead + ' liikkunut.';
+    var sum = '';
+    (B.summary || []).forEach(function (x) {
+      sum += '<div class="item ' + x.side + '"><b class="tag">' + (x.side === 'bull' ? '▲ Nousuennusteet' : '▼ Laskuennusteet') + '</b>' + esc(x.text) + '</div>';
+    });
+    if (B.base_text) sum += '<p class="base">' + esc(B.base_text) + '</p>';
+    $('#btSummary').innerHTML = sum;
+
+    var VI = { yes: '✓', weak: '≈', no: '✗', few: '–', ref: '', none: '' };
+    var arrow = function (v) { return v > 0 ? '<span class="a-up">▲</span> ' : v < 0 ? '<span class="a-dn">▼</span> ' : ''; };
+    var unitShort = H.key === 'day' ? 'hav.' : 'pv';
+    var html = '<thead><tr><th>Mallin lukema</th><th class="num">' + (H.key === 'day' ? 'Havaintoja' : 'Päiviä') + '</th>' +
+      '<th>Hinta ' + esc(H.ahead_short) + ' päästä</th><th class="num">Hinnan keskim. muutos</th><th>Toimiko ennuste?</th></tr></thead><tbody>';
+    B.rows.forEach(function (row) {
+      var isCur = row.key === B.current, ud, chg;
+      if (row.n === 0) {
+        ud = '<span class="muted">ei esiintynyt</span>'; chg = '–';
+      } else {
+        var u = Math.round(row.up * 100), dn = Math.round(row.down * 100);
+        ud = '<div class="ud"><span class="' + (row.side === 'bull' ? 'key' : '') + '"><span class="a-up">▲</span> nousi ' + u + ' %</span>' +
+          '<span class="' + (row.side === 'bear' ? 'key' : '') + '"><span class="a-dn">▼</span> laski ' + dn + ' %</span></div>' +
+          '<div class="splitbar" aria-hidden="true"><b class="u" style="width:' + u + '%"></b><b class="d" style="width:' + dn + '%"></b></div>';
+        chg = '<span class="chgv">' + arrow(row.avg) + num(row.avg * 100, 2, true) + ' %</span>';
+      }
+      html += '<tr class="' + (isCur ? 'cur' : '') + (row.n === 0 ? ' empty' : '') + '"><td class="c-lab">' + esc(row.label) + (isCur ? '<span class="nowtag">← nyt</span>' : '') + '</td>' +
+        '<td class="num c-n" data-u="' + unitShort + '">' + row.n.toLocaleString('fi-FI') + '</td><td class="c-ud">' + ud + '</td><td class="num c-chg">' + chg + '</td>' +
+        '<td class="c-ver"><span class="verd ' + row.verdict + '"><span class="vi">' + VI[row.verdict] + '</span>' + esc(row.verdict_label) + '</span></td></tr>';
+    });
+    $('#btTable').innerHTML = html + '</tbody>';
+    $('#btNote').innerHTML =
+      '<b>Näin taulukkoa luetaan.</b> <i>Hinta ' + esc(H.ahead_short) + ' päästä</i>: kuinka suuressa osassa havainnoista hopea oli ' + esc(H.ahead) +
+      ' kalliimpi (▲) tai halvempi (▼). Lihavoitu luku on se suunta, jota malli ennusti. ' +
+      '<i>Hinnan keskim. muutos</i> kertoo hopean oman liikkeen: plus = hinta nousi, miinus = hinta laski. ' +
+      '<i>Toimiko ennuste?</i> vertaa tavalliseen havaintoon: <b>✓ Toimi</b> = ennustettu suunta toteutui yli puolessa kerroista, vähintään 3 prosenttiyksikköä ' +
+      'tavallista useammin, ja hinta liikkui keskimäärin ennustettuun suuntaan. <b>≈ Heikosti</b> = tavallista parempi tulos, mutta ei selvä. ' +
+      'Johtopäätös tehdään vasta, kun rivillä on vähintään ' + B.min_n.toLocaleString('fi-FI') + ' ' + B.unit + ' (noin 15 toisistaan riippumatonta jaksoa).' +
+      (H.key === 'long' ? ' Pitkällä aikajänteellä riippumattomia jaksoja on 10 vuodessa vain noin 60, joten varmoja johtopäätöksiä on vaikea tehdä.' : '') + '<br><br>' +
+      'Mallin korkein nousulukema historiassa oli ' + pctInt(B.max_bull) + ' ja korkein laskulukema ' + pctInt(B.max_bear) + '. ' + Math.round(TH * 100) + ' %:n raja ylittyi ' +
+      num(B.share_signal * 100, 1) + ' %:ssa havainnoista. ' + esc(H.note);
+  }
+
+  /* ---------- Kulta–hopea-suhde: vyöhykkeet ja laskuesimerkki ---------- */
+  (function () {
+    var G = D.charts.gsr, ex = G && G.example;
+    if (!G) return;
+    var curKey = ex ? ex.zone : null;
+    if (ex) $('#gsrNow').textContent = 'Nyt ' + ex.ratio + ' · ' + ex.zone_text;
+    $('#gsrZones').innerHTML = '<div class="eyebrow" style="padding:0 10px 4px">Näin suhdetta luetaan</div>' + G.zones.map(function (z) {
+      var cur = z.key === curKey;
+      return '<div class="zone' + (cur ? ' cur' : '') + '"><span class="zsw ' + z.tint + '"></span><div>' +
+        '<div class="zr"><b>' + esc(z.range) + '</b> · ' + esc(z.title) + (cur ? '<span class="nowtag">← nyt ' + esc(ex.ratio) + '</span>' : '') + '</div>' +
+        '<p>' + esc(z.text) + '</p></div></div>';
+    }).join('');
+    if (!ex) { $('#gsrCalcBox').style.display = 'none'; return; }
+    var steps = ex.steps.slice();
+    var shares = HS.filter(function (h) { return h.available && h.parts && h.parts.gsr; }).map(function (h) {
+      var p = h.parts.gsr, v = p.w * p.s * 100;
+      return h.name.toLowerCase() + 'llä aikajänteellä paino ' + num(p.w * 100, 1) + ' % × (' + num(p.s, 2, true) + ') = <b>' +
+        num(v, 1, true) + ' %-yks</b> ' + (v >= 0 ? 'nousun' : 'laskun') + ' puolelle';
+    });
+    if (shares.length) {
+      steps.push('<b>Osuus lopputuloksesta</b>: ' + shares.join(' ja ') + '. Samat luvut näkyvät kohdassa ”Mikä painaa vaakaa”, kun valitset aikajänteen.');
+    }
+    $('#gsrCalc').innerHTML = steps.map(function (x) { return '<li>' + x + '</li>'; }).join('');   // tekstit tulevat omasta ohjelmasta
+    $('#gsrWhatIf').innerHTML = ex.whatif;
+  })();
+
+  /* ---------- Kaavataulukko (valittu aikajänne) ---------- */
+  function renderFormula() {
+    var H = HBY[state.h];
+    if (!H || !H.available) return;
+    var tot = { w: 0, b: 0, n: 0, r: 0 };
+    var ft = '<thead><tr><th>Mittari</th><th class="num">Paino w</th><th class="num">Pisteet s</th><th class="num">→ Nousu</th><th class="num">→ Neutraali</th><th class="num">→ Lasku</th></tr></thead><tbody>';
+    Object.keys(H.weights).forEach(function (k) {
+      var p = H.parts[k], card = D.indicators.filter(function (c) { return c.key === k; })[0];
+      var name = card ? card.name : k;
+      if (!p) { ft += '<tr><td>' + esc(name) + '</td><td class="num muted">–</td><td class="num muted">ei dataa</td><td></td><td></td><td></td></tr>'; return; }
+      tot.w += p.w; tot.b += p.bull; tot.n += p.neutral; tot.r += p.bear;
+      ft += '<tr><td>' + esc(name) + '</td><td class="num">' + num(p.w * 100, 1) + ' %</td><td class="num">' + num(p.s, 2, true) + '</td>' +
+        '<td class="num">' + num(p.bull * 100, 1) + '</td><td class="num">' + num(p.neutral * 100, 1) + '</td><td class="num">' + num(p.bear * 100, 1) + '</td></tr>';
+    });
+    ft += '<tr class="total"><td>Yhteensä</td><td class="num">' + num(tot.w * 100, 0) + ' %</td><td></td><td class="num">' + num(tot.b * 100, 1) + ' %</td><td class="num">' + num(tot.n * 100, 1) + ' %</td><td class="num">' + num(tot.r * 100, 1) + ' %</td></tr></tbody>';
+    $('#fTable').innerHTML = ft;
+    var c = H.calib;
+    if (c) {
+      var x = H.net, eta = c.a + c.b * x, p = 1 / (1 + Math.exp(-eta));
+      $('#fCalib').innerHTML = '<b>' + esc(H.name) + '</b> (' + esc(H.ahead) + '): a = ' + num(c.a, 3, true) + ', b = ' + num(c.b, 3, true) +
+        ' (sovitettu ' + c.n.toLocaleString('fi-FI') + ' havaintoon)<br>' +
+        'Nyt x = ' + num(tot.b * 100, 1) + ' % − ' + num(tot.r * 100, 1) + ' % = ' + num(x, 2, true) + '<br>' +
+        'P(hinta korkeammalla) = 1 / (1 + e<sup>−(' + num(c.a, 3, true) + ' + ' + num(c.b, 3, true) + ' × ' + num(x, 2, true) + ')</sup>) = <b>' + num(p * 100, 1) + ' %</b>' +
+        '<br><span class="muted small">' + (c.relation === 'pos' ? 'b on tilastollisesti merkitsevästi positiivinen: nousulukemat ovat ennakoineet nousua.' :
+          c.relation === 'neg' ? 'b on merkitsevästi negatiivinen: lukema on toiminut päinvastoin.' :
+          'b ei eroa nollasta tilastollisesti merkitsevästi (z = ' + num(c.b_z, 2, true) + '): lukeman ja hinnan suunnan yhteys voi olla sattumaa.') + '</span>';
+    } else {
+      $('#fCalib').textContent = 'Kalibrointia ei voitu laskea tälle aikajänteelle (liian vähän historiaa).';
+    }
+  }
+  $('#fList').innerHTML = D.indicators.map(function (c) { return '<li><b>' + esc(c.name) + ':</b> <code>' + esc(c.formula) + '</code></li>'; }).join('');
+  renderH();
+
+  /* ---------- Seuranta ---------- */
+  (function () {
+    var K = D.tracking || {}, el = $('#trackBody');
+    if (!K.enabled) {
+      el.innerHTML = '<p class="muted">' + (K.error ? 'Lokin käsittely epäonnistui: ' + esc(K.error) : 'Signaaliloki on pois päältä (ajettu valitsimella --no-log).') + '</p>';
+      return;
+    }
+    var html = '';
+    if (D.meta.demo) html += '<p class="small muted">Demo-tilassa lokiin ei kirjoiteta uusia rivejä.</p>';
+    if (!K.n_daily && !K.n_hourly) {
+      html += '<p>Lokia ei ole vielä kertynyt. Ensimmäinen päivärivi kirjataan päätöskurssin jälkeen (klo 17 New Yorkin aikaa, Suomessa klo 0 tai 1 yöllä), ja tuntirivi kerran tunnissa markkinan ollessa auki. ' +
+        'Ensimmäiset toteutuneet tulokset näkyvät, kun aikajänne on kulunut: päiväkaupassa 4 tunnin, lyhyellä 5 päivän ja pitkällä 40 päivän kuluttua.</p>';
+      el.innerHTML = html;
+      return;
+    }
+    html += '<p class="small" style="color:var(--text2)">Päiväloki alkaen ' + esc(K.since ? K.since.split('-').reverse().map(function (x) { return String(+x); }).join('.') : '–') + ' (' + K.n_daily + ' riviä), tuntiloki ' + K.n_hourly + ' riviä. ' +
+      '”Ennuste” = nousu − lasku vähintään ±' + Math.round(D.meta.call_threshold * 100) + ' prosenttiyksikköä. Muut lukemat kirjataan, mutta niitä ei lasketa osumiksi.</p>';
+    html += '<div class="tk-grid">' + K.horizons.map(function (x) {
+      var pending = x.logged - x.matured;
+      var head = '<div class="tk-h">' + esc(x.name) + ' · ' + esc(x.ahead) + '</div>';
+      if (!x.calls) return '<div class="tk">' + head + '<div class="tk-v" style="font-size:16px">Ei vielä toteutuneita ennusteita</div>' +
+        '<div class="tk-s">Kirjattu ' + x.logged + ', odottaa tulosta ' + pending + '.</div></div>';
+      var calib = (x.mean_p != null && x.real_up != null) ? '<div class="tk-s">Malli arvioi nousun todennäköisyydeksi keskimäärin ' + Math.round(x.mean_p * 100) + '\u00a0%, toteutui ' + Math.round(x.real_up * 100) + '\u00a0%.</div>' : '';
+      return '<div class="tk">' + head + '<div class="tk-v">' + x.hits + ' / ' + x.calls + ' osui <span class="muted" style="font-size:15px;font-weight:600">(' + Math.round(x.hit_rate * 100) + ' %)</span></div>' +
+        '<div class="tk-s">Kirjattu ' + x.logged + ', toteutunut ' + x.matured + ', odottaa ' + pending + '.</div>' + calib + '</div>';
+    }).join('') + '</div>';
+    if (K.recent && K.recent.length) {
+      html += '<h3 style="margin-top:18px">Viimeisimmät päiväkirjaukset (lyhyt aikajänne)</h3><div class="tablewrap"><table><thead><tr><th>Päivä</th><th class="num">Hinta $</th><th>Mallin lukema</th><th class="num">P(nousu 5 pv)</th><th class="num">Toteutunut 5 pv</th><th></th></tr></thead><tbody>' +
+        K.recent.map(function (r) {
+          var net = (r.bull || 0) - (r.bear || 0), CT = D.meta.call_threshold;
+          var call = r.bull == null ? '–' : net >= CT ? '<span class="a-up" style="color:var(--bull)">▲</span> nousu ' + Math.round(r.bull * 100) + ' %' :
+            net <= -CT ? '<span style="color:var(--bear)">▼</span> lasku ' + Math.round(r.bear * 100) + ' %' : '<span class="muted">● ei suuntaa</span>';
+          var res = r.chg == null ? '<span class="muted">odottaa</span>' : (r.chg > 0 ? '<span style="color:var(--bull)">▲</span> ' : r.chg < 0 ? '<span style="color:var(--bear)">▼</span> ' : '') + num(r.chg * 100, 2, true) + '\u00a0%';
+          var mark = (r.chg == null || Math.abs(net) < CT || r.chg === 0) ? '' : ((net > 0) === (r.chg > 0) ? '<span class="mark-ok">✓</span>' : '<span class="mark-no">✗</span>');
+          return '<tr><td>' + esc(r.pvm) + '</td><td class="num">' + num(r.price, 2) + '</td><td>' + call + '</td><td class="num">' + (r.p == null ? '–' : Math.round(r.p * 100) + ' %') + '</td><td class="num">' + res + '</td><td>' + mark + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    if (K.files && K.files.length) {
+      html += '<div class="dl">' + K.files.map(function (f) { return '<a href="' + esc(f) + '" download>⬇ ' + esc(f) + '</a>'; }).join('') + '</div>' +
+        '<p class="small muted" style="margin-top:6px">CSV-tiedostot aukeavat suoraan Excelissä (erotin puolipiste, desimaalipilkku).</p>';
+    }
+    el.innerHTML = html;
+  })();
+
+  /* ---------- Lähteet ---------- */
+  $('#sources').innerHTML = D.meta.fresh.map(function (f) {
+    return '<li><b>' + esc(f.name) + '</b> – <a href="' + esc(f.url) + '" target="_blank" rel="noopener">' + esc(f.src) + '</a>, tieto ' + esc(f.when) + ' <span class="muted">(' + esc(f.note) + ')</span></li>';
+  }).join('');
+  $('#genline').textContent = 'Laskettu ' + D.meta.generated + ' (' + D.meta.timezone + ').' +
+    (D.meta.refresh > 0 ? ' Sivu latautuu uudelleen ' + (D.meta.refresh >= 120 ? Math.round(D.meta.refresh / 60) + ' minuutin' : D.meta.refresh + ' sekunnin') + ' välein.' : '');
+  document.querySelectorAll('.lede').forEach(function (el) { el.innerHTML = el.innerHTML.replace('{TH}', Math.round(TH * 100)); });
+  if (D.charts.intraday) $('#intraTime').textContent = 'klo ' + D.charts.intraday.t[D.charts.intraday.t.length - 1].slice(11).replace(':', '.');
+
+  /* ================= KAAVIOT (Plotly) ================= */
+  if (!window.Plotly) {
+    document.querySelectorAll('.chart, .mini').forEach(function (el) { el.innerHTML = '<div class="nochart">Kaavioita ei voitu ladata (tarkista verkkoyhteys).</div>'; });
+    return;
+  }
+  Plotly.register({ moduleType: 'locale', name: 'fi', dictionary: {}, format: {
+    days: ['sunnuntai', 'maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai'],
+    shortDays: ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'],
+    months: ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu', 'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'],
+    shortMonths: ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu'],
+    date: '%d.%m.%Y', decimal: ',', thousands: ' ' } });
+  var touch = window.matchMedia('(pointer: coarse)').matches;
+
+  function T() {
+    var cs = getComputedStyle(document.documentElement), g = function (n) { return cs.getPropertyValue(n).trim(); };
+    return { bull: g('--bull'), bear: g('--bear'), neutral: g('--neutral'), text: g('--text'), text2: g('--text2'), muted: g('--muted'),
+      grid: g('--grid'), axis: g('--axis'), card: g('--card'), border: g('--border'), line: g('--line'),
+      emaA: g('--ema-a'), emaB: g('--ema-b'), vwap: g('--vwap'), band: g('--band'), barN: g('--bar-neutral'),
+      zBull: g('--zone-bull'), zBull2: g('--zone-bull2'), zBear: g('--zone-bear') };
+  }
+  function axis(t, extra) {
+    return Object.assign({ gridcolor: t.grid, linecolor: t.axis, zeroline: false, tickfont: { color: t.muted, size: 11 },
+      showspikes: true, spikecolor: t.axis, spikethickness: 1, spikedash: 'dot', spikemode: 'across', fixedrange: touch }, extra || {});
+  }
+  function layout(t, extra) {
+    return Object.assign({
+      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', separators: ', ',
+      font: { family: 'Inter, system-ui, sans-serif', size: 12, color: t.text2 },
+      margin: { l: 8, r: 52, t: 8, b: 30 }, showlegend: false, hovermode: 'x unified', dragmode: touch ? false : 'zoom',
+      hoverlabel: { bgcolor: t.card, bordercolor: t.border, font: { color: t.text, size: 12 } },
+      xaxis: axis(t), yaxis: axis(t, { side: 'right' })
+    }, extra || {});
+  }
+  var CFG = { displayModeBar: false, responsive: true, locale: 'fi', scrollZoom: false };
+
+  function drawIntraday(t) {
+    var c = D.charts.intraday, el = $('#ch-intraday');
+    if (!c) { el.innerHTML = '<div class="nochart">Päivänsisäistä dataa ei saatu.</div>'; return; }
+    var txt = c.t.map(function (_, i) { return 'Avaus ' + num(c.o[i]) + ' · Ylin ' + num(c.h[i]) + '<br>Alin ' + num(c.l[i]) + ' · Päätös ' + num(c.c[i]); });
+    // Puhelimessa näytetään oletuksena viimeinen vuorokausi, isolla näytöllä koko jakso
+    var n = c.t.length, from = touch ? Math.max(0, n - 96) : 0;
+    var lo = Infinity, hi = -Infinity;
+    for (var i = from; i < n; i++) { if (c.l[i] != null && c.l[i] < lo) lo = c.l[i]; if (c.h[i] != null && c.h[i] > hi) hi = c.h[i]; }
+    var pad = (hi - lo) * 0.06;
+    Plotly.react(el, [
+      { type: 'candlestick', x: c.t, open: c.o, high: c.h, low: c.l, close: c.c, name: 'Hopea', text: txt, hoverinfo: 'text',
+        increasing: { line: { color: t.bull, width: 1 }, fillcolor: t.bull }, decreasing: { line: { color: t.bear, width: 1 }, fillcolor: t.bear }, whiskerwidth: 0 },
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.ema9, name: 'EMA 9', line: { color: t.emaA, width: 1.6 }, hovertemplate: '%{y:.2f} $' },
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.ema21, name: 'EMA 21', line: { color: t.emaB, width: 1.6 }, hovertemplate: '%{y:.2f} $' },
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.vwap, name: 'VWAP', line: { color: t.vwap, width: 1.6, dash: 'dash' }, hovertemplate: '%{y:.2f} $' }
+    ], layout(t, {
+      height: touch ? 300 : 360,
+      xaxis: axis(t, { rangeslider: { visible: false }, type: 'date', rangebreaks: [{ bounds: ['sat', 'mon'] }], tickformat: '%H.%M\n%-d.%-m.', hoverformat: '%-d.%-m. klo %H.%M', range: [c.t[from], c.t[n - 1]] }),
+      yaxis: axis(t, { side: 'right', range: [lo - pad, hi + pad], tickformat: '.2f' })
+    }), CFG);
+  }
+
+  function drawContrib(t) {
+    var H = HBY[state.h], el = $('#ch-contrib');
+    if (!H || !H.available) { el.innerHTML = '<div class="nochart">Ei dataa.</div>'; return; }
+    var names = {};
+    D.indicators.forEach(function (c) { names[c.key] = c.name; });
+    var items = Object.keys(H.parts).map(function (k) { var p = H.parts[k]; return { name: names[k] || k, v: p.w * p.s * 100 }; })
+      .sort(function (a, b) { return a.v - b.v; });
+    var max = Math.max(4, Math.max.apply(null, items.map(function (i) { return Math.abs(i.v); }))) * 1.35;
+    Plotly.react(el, [{
+      type: 'bar', orientation: 'h', y: items.map(function (i) { return i.name; }), x: items.map(function (i) { return i.v; }),
+      marker: { color: items.map(function (i) { return i.v > 0.05 ? t.bull : i.v < -0.05 ? t.bear : t.barN; }) },
+      text: items.map(function (i) { return num(i.v, 1, true); }), textposition: 'outside', cliponaxis: false,
+      textfont: { color: t.text2, size: 11 }, hovertemplate: '%{y}: %{x:+.1f} %-yks<extra></extra>', width: 0.62
+    }], layout(t, {
+      height: items.length * 34 + 52, margin: { l: 8, r: 40, t: 4, b: 44 }, hovermode: 'closest', dragmode: false,
+      xaxis: axis(t, { range: [-max, max], zeroline: true, zerolinecolor: t.axis, zerolinewidth: 1.5, fixedrange: true, showspikes: false, title: { text: '← laskua   ·   nousua →', font: { size: 11, color: t.muted }, standoff: 14 } }),
+      yaxis: axis(t, { side: 'left', automargin: true, showgrid: false, fixedrange: true, showspikes: false, tickfont: { color: t.text2, size: 12 } })
+    }), CFG);
+  }
+
+  function drawDaily(t) {
+    var c = D.charts.daily, n = c.t.length;
+    var hk = state.h === 'long' ? 'long' : 'swing', sig = (c.signals || {})[hk] || { bull: [], bear: [] };
+    $('#dailyHz').textContent = 'Alhaalla: ' + HBY[hk].name.toLowerCase() + ' aikajänne (' + HBY[hk].ahead_short + ')' + (state.h === 'day' ? ' · päiväkaupalle ei ole päivätason historiaa' : '');
+    var start = c.t[Math.max(0, n - 260)], end = c.t[n - 1];
+    var neg = sig.bear.map(function (v) { return v == null ? null : -v; });
+    Plotly.react($('#ch-daily'), [
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.c, name: 'Hopea', line: { color: t.line, width: 2 }, hovertemplate: '%{y:.2f} $' },
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.ema20, name: '20 pv ka.', line: { color: t.emaA, width: 1.5 }, hovertemplate: '%{y:.2f} $' },
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.ema50, name: '50 pv ka.', line: { color: t.emaB, width: 1.5 }, hovertemplate: '%{y:.2f} $' },
+      { type: 'bar', x: c.t, y: sig.bull, name: 'Nousu', yaxis: 'y2', marker: { color: t.bull }, hovertemplate: 'nousu %{y:.0f} %' },
+      { type: 'bar', x: c.t, y: neg, name: 'Lasku', yaxis: 'y2', marker: { color: t.bear }, customdata: sig.bear, hovertemplate: 'lasku %{customdata:.0f} %' }
+    ], layout(t, {
+      height: touch ? 400 : 460, barmode: 'overlay', bargap: 0.25,
+      xaxis: axis(t, { range: [start, end], type: 'date', rangebreaks: [{ bounds: ['sat', 'mon'] }], hoverformat: '%-d.%-m.%Y', rangeselector: {
+        buttons: [{ count: 3, label: '3 kk', step: 'month', stepmode: 'backward' }, { count: 6, label: '6 kk', step: 'month', stepmode: 'backward' },
+          { count: 1, label: '1 v', step: 'year', stepmode: 'backward' }, { step: 'all', label: '2 v' }],
+        x: 0, y: 1.0, yanchor: 'bottom', bgcolor: 'rgba(0,0,0,0)', activecolor: t.grid, bordercolor: t.border, borderwidth: 1, font: { size: 11, color: t.text2 } } }),
+      yaxis: axis(t, { side: 'right', domain: [0.36, 1], tickformat: '.0f', ticksuffix: ' $', autorange: true }),
+      yaxis2: axis(t, { side: 'right', domain: [0, 0.27], range: [-105, 105], tickvals: [-TH * 100, 0, TH * 100],
+        ticktext: [Math.round(TH * 100) + ' %', '0', Math.round(TH * 100) + ' %'], showspikes: false }),
+      margin: { l: 8, r: 52, t: 34, b: 30 },
+      shapes: [TH * 100, -TH * 100].map(function (y) { return { type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y2', y0: y, y1: y, line: { color: t.text2, width: 1, dash: 'dash' } }; }),
+      annotations: [
+        { xref: 'paper', yref: 'y2', x: 0, y: 92, xanchor: 'left', yanchor: 'bottom', text: 'nousu ↑', showarrow: false, font: { size: 11, color: t.muted } },
+        { xref: 'paper', yref: 'y2', x: 0, y: -92, xanchor: 'left', yanchor: 'top', text: 'lasku ↓', showarrow: false, font: { size: 11, color: t.muted } }]
+    }), CFG);
+  }
+
+  function drawGSR(t) {
+    var c = D.charts.gsr, el = $('#ch-gsr');
+    if (!c || !c.t.length) { el.innerHTML = '<div class="nochart">Kulta–hopea-suhteen dataa ei saatu.</div>'; return; }
+    var n = c.v.length, last = n - 1, iMax = -1, iMin = -1;
+    while (last > 0 && c.v[last] == null) last--;
+    c.v.forEach(function (v, i) {
+      if (v == null) return;
+      if (iMax < 0 || v > c.v[iMax]) iMax = i;
+      if (iMin < 0 || v < c.v[iMin]) iMin = i;
+    });
+    var lo = Math.floor(Math.min(c.v[iMin], 60) - 4), hi = Math.ceil(Math.max(c.v[iMax], 100) + 4);
+    var tint = { bull: t.zBull, bull2: t.zBull2, bear: t.zBear };
+    var shapes = c.zones.filter(function (z) { return z.tint !== 'none'; }).map(function (z) {
+      return { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: z.lo == null ? lo : z.lo, y1: z.hi == null ? hi : z.hi,
+        fillcolor: tint[z.tint], line: { width: 0 }, layer: 'below' };
+    });
+    var mmyy = function (d) { var p = d.split('-'); return (+p[1]) + '/' + p[0]; };
+    var lab = function (i, txt, ay) {
+      return { x: c.t[i], y: c.v[i], text: txt, showarrow: true, arrowhead: 0, arrowwidth: 1, arrowcolor: t.muted,
+        ax: i > n * 0.8 ? -40 : 34, ay: ay, font: { size: 11, color: t.text2 }, bgcolor: t.card, borderpad: 2 };
+    };
+    var ann = [lab(last, 'nyt ' + num(c.v[last], 1), c.v[last] > (lo + hi) / 2 ? 26 : -26)];
+    if (last - iMax > 40) ann.push(lab(iMax, 'huippu ' + num(c.v[iMax], 0) + ' (' + mmyy(c.t[iMax]) + ')', -20));
+    if (last - iMin > 40) ann.push(lab(iMin, 'pohja ' + num(c.v[iMin], 0) + ' (' + mmyy(c.t[iMin]) + ')', 22));
+    Plotly.react(el, [
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.mean, name: '3 v ka.', line: { color: t.emaB, width: 1.5, dash: 'dash' }, hovertemplate: '%{y:.1f}' },
+      { type: 'scatter', mode: 'lines', x: c.t, y: c.v, name: 'Suhde', line: { color: t.line, width: 1.8 }, hovertemplate: '%{y:.1f}' },
+      { type: 'scatter', mode: 'markers', x: [c.t[last]], y: [c.v[last]], hoverinfo: 'skip', showlegend: false,
+        marker: { size: 9, color: t.line, line: { color: t.card, width: 2 } } }
+    ], layout(t, { height: touch ? 300 : 380, shapes: shapes, annotations: ann, margin: { l: 8, r: 40, t: 34, b: 30 },
+      xaxis: axis(t, { type: 'date', hoverformat: '%-d.%-m.%Y', rangeselector: {
+        buttons: [{ count: 3, label: '3 v', step: 'year', stepmode: 'backward' }, { count: 5, label: '5 v', step: 'year', stepmode: 'backward' }, { step: 'all', label: 'kaikki' }],
+        x: 0, y: 1.0, yanchor: 'bottom', bgcolor: 'rgba(0,0,0,0)', activecolor: t.grid, bordercolor: t.border, borderwidth: 1, font: { size: 11, color: t.text2 } } }),
+      yaxis: axis(t, { side: 'right', tickformat: '.0f', dtick: 10, range: [lo, hi] }) }), CFG);
+  }
+
+  function drawMini(t, card) {
+    var el = document.getElementById('mini-' + card.key), ch = card.chart;
+    if (!el) return;
+    if (!ch) { el.innerHTML = '<div class="nochart">Ei kaaviodataa.</div>'; return; }
+    var traces = ch.series.map(function (s, i) {
+      if (ch.kind === 'bar') return { type: 'bar', x: ch.t, y: s.y, marker: { color: s.y.map(function (v) { return v >= 0 ? t.barN : t.barN; }) }, hoverinfo: 'skip' };
+      return { type: 'scatter', mode: 'lines', x: ch.t, y: s.y, hoverinfo: 'skip',
+        line: { color: i === 0 ? t.line : (i === 1 ? t.emaB : t.emaA), width: i === 0 ? 1.8 : 1.2, dash: i === 0 ? 'solid' : 'dot' } };
+    });
+    var shapes = (ch.hlines || []).map(function (h) { return { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: h.y, y1: h.y, line: { color: t.muted, width: 1, dash: 'dot' } }; });
+    var ys = [];
+    ch.series.forEach(function (s) { s.y.forEach(function (v) { if (v != null) ys.push(v); }); });
+    (ch.hlines || []).forEach(function (h) { ys.push(h.y); });
+    var lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys), pad = (hi - lo) * 0.08 || 1;
+    Plotly.react(el, traces, layout(t, {
+      height: 104, margin: { l: 2, r: 40, t: 4, b: 18 }, hovermode: false, dragmode: false, shapes: shapes, bargap: 0.1,
+      xaxis: axis(t, { showgrid: false, nticks: 4, fixedrange: true, showspikes: false, tickfont: { color: t.muted, size: 10 },
+        type: ch.kind === 'line' && card.key === 'intraday' ? 'date' : 'date' }),
+      yaxis: axis(t, { side: 'right', nticks: 3, fixedrange: true, showspikes: false, range: [lo - pad, hi + pad], tickfont: { color: t.muted, size: 10 } })
+    }), { staticPlot: true, responsive: true, locale: 'fi' });
+  }
+
+  function drawAll() {
+    var t = T();
+    try { drawIntraday(t); } catch (e) { console.error(e); }
+    try { drawContrib(t); } catch (e) { console.error(e); }
+    try { drawDaily(t); } catch (e) { console.error(e); }
+    try { drawGSR(t); } catch (e) { console.error(e); }
+    D.indicators.forEach(function (c) { try { drawMini(t, c); } catch (e) { console.error(e); } });
+  }
+  drawAll();
+
+  // Teeman vaihto
+  var root = document.documentElement;
+  function isDark() { return root.dataset.theme ? root.dataset.theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches; }
+  $('#themeBtn').addEventListener('click', function () {
+    root.dataset.theme = isDark() ? 'light' : 'dark';
+    try { localStorage.setItem('hs-theme', root.dataset.theme); } catch (e) {}
+    drawAll();
+  });
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll); } catch (e) {}
+})();
+</script>
+</body>
+</html>
