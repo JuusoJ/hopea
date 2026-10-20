@@ -301,6 +301,7 @@ footer ul { padding-left: 18px; margin: 8px 0 14px; }
 <body>
 <div class="wrap">
   <div id="banners"></div>
+  <div id="staleBanner" class="banner warn" hidden></div>
 
   <header class="top">
     <div class="brand">
@@ -460,7 +461,33 @@ footer ul { padding-left: 18px; margin: 8px 0 14px; }
   if (D.meta.demo) ban += '<div class="banner demo"><b>DEMO-tila:</b> sivulla on keksittyä dataa ulkoasun testaamiseen. Aja ohjelma ilman <code>--demo</code>-valitsinta saadaksesi oikeat markkinatiedot.</div>';
   if (D.meta.errors && D.meta.errors.length) ban += '<div class="banner warn"><b>Osa datasta puuttuu tältä ajokerralta:</b> ' + D.meta.errors.map(esc).join(' · ') + '. Puuttuvien mittarien painot on jaettu muille.</div>';
   $('#banners').innerHTML = ban;
-  $('#updated').textContent = 'Päivitetty ' + D.meta.generated;
+  /* Tietojen ikä: päivittyy sivulla 30 s välein, varoitus jos ajo on viivästynyt */
+  var GEN = new Date(D.meta.generated_iso);
+  function ageText(ms) {
+    var m = Math.max(0, Math.round(ms / 60000));
+    if (m < 1) return 'juuri nyt';
+    if (m < 60) return m + ' min sitten';
+    var h = Math.floor(m / 60), r = m % 60;
+    if (h >= 24) return Math.floor(h / 24) + ' pv' + (h % 24 ? ' ' + (h % 24) + ' h' : '') + ' sitten';
+    return h + ' h' + (r ? ' ' + r + ' min' : '') + ' sitten';
+  }
+  function marketOpen(now) {   // COMEX: su klo 18 – pe klo 17 New Yorkin aikaa, tauko klo 17–18
+    var ny = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    var d = ny.getDay(), h = ny.getHours();
+    if (d === 6 || (d === 5 && h >= 17) || (d === 0 && h < 18) || h === 17) return false;
+    return true;
+  }
+  function updateAge() {
+    var now = new Date(), age = now - GEN, open = marketOpen(now);
+    $('#updated').textContent = 'Päivitetty ' + D.meta.generated + ' · ' + ageText(age) + (open ? '' : ' · markkina kiinni');
+    var sb = $('#staleBanner');
+    if (!D.meta.demo && open && age > 40 * 60000) {
+      sb.innerHTML = '<b>Tiedot ovat ' + ageText(age).replace(' sitten', '') + ' vanhoja.</b> Automaattinen päivitys on viivästynyt. Sivu latautuu itsestään, kun uusi versio on valmis. Hinnat ja signaalit kuvaavat tilannetta klo ' + D.meta.generated.split('klo ')[1] + '.';
+      sb.hidden = false;
+    } else { sb.hidden = true; }
+  }
+  updateAge();
+  setInterval(updateAge, 30000);
 
   var P = D.price;
   $('#px').textContent = P.usd;

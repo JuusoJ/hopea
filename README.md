@@ -36,11 +36,35 @@ Valitsimet: `--out` (HTML-tiedosto), `--json` (raakadata myös JSONina), `--refr
    **Run workflow**. Ensimmäinen ajo kestää noin minuutin.
 4. Sivu löytyy osoitteesta `https://<käyttäjänimesi>.github.io/hopea-signaali/`.
 
-Tämän jälkeen sivu päivittyy itsestään 15 minuutin välein sunnuntaista perjantaihin.
+Tämän jälkeen sivu päivittyy itsestään sunnuntaista perjantaihin. Varman 15 minuutin tahdin saat alla olevalla ulkoisella ajastuksella.
 
 Jos *Tallenna signaaliloki* -vaihe epäonnistuu virheeseen 403, avaa
 **Settings → Actions → General → Workflow permissions** ja valitse
 **Read and write permissions**.
+
+### Luotettava ajastus (suositus)
+
+GitHubin oma ajastin ei ole luotettava: ruuhka-aikoina ajot viivästyvät tai jäävät
+kokonaan väliin, eikä siitä tule ilmoitusta. Varmin ratkaisu on antaa ilmainen
+ulkoinen palvelu (esim. [cron-job.org](https://cron-job.org)) käynnistää työnkulku
+GitHubin rajapinnan kautta. GitHubin oma ajastin jää varajärjestelmäksi.
+
+1. **Tee avain:** GitHub → profiilikuva → Settings → Developer settings →
+   Personal access tokens → **Fine-grained tokens** → Generate new token.
+   Repository access: **Only select repositories** → tämä repo.
+   Permissions → Repository permissions → **Actions: Read and write**. Muita
+   oikeuksia ei tarvita.
+2. **Tee ajastus cron-job.orgissa:** Create cronjob
+   - URL: `https://api.github.com/repos/<käyttäjä>/<repo>/actions/workflows/paivita.yml/dispatches`
+   - Schedule: 15 minuutin välein
+   - Advanced → Request method **POST**, body `{"ref":"main"}`
+   - Headers: `Authorization: Bearer <avain>`, `Accept: application/vnd.github+json`,
+     `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`
+3. **Testaa** (Test run): vastauksen pitää olla **204**, ja Actions-välilehdelle
+   ilmestyy uusi ajo.
+
+Sivun yläreunassa näkyy, kuinka vanhoja tiedot ovat. Jos tiedot ovat markkinan
+ollessa auki yli 40 minuuttia vanhoja, sivulla näkyy varoitus.
 
 **Hyvä tietää:**
 - GitHubin ajastetut ajot ovat vähintään 5 minuutin välein ja voivat ruuhkassa

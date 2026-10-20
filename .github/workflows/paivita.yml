@@ -1,11 +1,13 @@
 name: Päivitä hopea-signaali
 
 on:
-  # Metallifutuurit käyvät kauppaa su–pe. GitHubin ajastus on vähintään 5 min
-  # välein ja voi viivästyä ruuhka-aikoina, joten 15 min on realistinen tahti.
+  # Varajärjestelmä: GitHubin oma ajastin. Se ei ole luotettava (ruuhkassa ajoja
+  # viivästyy ja jää väliin), joten minuutit on valittu ruuhkahuippujen ohi.
+  # Varsinainen ajastus tehdään ulkoisella palvelulla (cron-job.org), joka
+  # käynnistää tämän työnkulun GitHubin rajapinnan kautta. Ohje: README.
   schedule:
-    - cron: "*/15 * * * 0-5"
-  workflow_dispatch:        # käsin ajo Actions-välilehdeltä
+    - cron: "7,22,37,52 * * * 0-5"
+  workflow_dispatch:        # käsin ajo Actions-välilehdeltä ja ulkoinen ajastin
   push:
     branches: [main]
 
