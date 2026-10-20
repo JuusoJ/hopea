@@ -699,11 +699,12 @@ footer ul { padding-left: 18px; margin: 8px 0 14px; }
     html += '<div class="tk-grid">' + K.horizons.map(function (x) {
       var pending = x.logged - x.matured;
       var head = '<div class="tk-h">' + esc(x.name) + ' · ' + esc(x.ahead) + '</div>';
+      var nxt = x.next ? '<div class="tk-s"><b>' + (x.calls ? 'Seuraava' : 'Ensimmäinen') + ' tulos:</b> ' + esc(x.next) + '</div>' : '';
       if (!x.calls) return '<div class="tk">' + head + '<div class="tk-v" style="font-size:16px">Ei vielä toteutuneita ennusteita</div>' +
-        '<div class="tk-s">Kirjattu ' + x.logged + ', odottaa tulosta ' + pending + '.</div></div>';
+        '<div class="tk-s">Kirjattu ' + x.logged + ', odottaa tulosta ' + pending + '.</div>' + nxt + '</div>';
       var calib = (x.mean_p != null && x.real_up != null) ? '<div class="tk-s">Malli arvioi nousun todennäköisyydeksi keskimäärin ' + Math.round(x.mean_p * 100) + '\u00a0%, toteutui ' + Math.round(x.real_up * 100) + '\u00a0%.</div>' : '';
       return '<div class="tk">' + head + '<div class="tk-v">' + x.hits + ' / ' + x.calls + ' osui <span class="muted" style="font-size:15px;font-weight:600">(' + Math.round(x.hit_rate * 100) + ' %)</span></div>' +
-        '<div class="tk-s">Kirjattu ' + x.logged + ', toteutunut ' + x.matured + ', odottaa ' + pending + '.</div>' + calib + '</div>';
+        '<div class="tk-s">Kirjattu ' + x.logged + ', toteutunut ' + x.matured + ', odottaa ' + pending + '.</div>' + calib + nxt + '</div>';
     }).join('') + '</div>';
     if (K.recent && K.recent.length) {
       html += '<h3 style="margin-top:18px">Viimeisimmät päiväkirjaukset (lyhyt aikajänne)</h3><div class="tablewrap"><table><thead><tr><th>Päivä</th><th class="num">Hinta $</th><th>Mallin lukema</th><th class="num">P(nousu 5 pv)</th><th class="num">Toteutunut 5 pv</th><th></th></tr></thead><tbody>' +

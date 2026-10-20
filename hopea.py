@@ -1439,7 +1439,8 @@ def tracking_stats(dlog: pd.DataFrame, hlog: pd.DataFrame, added: list) -> dict:
     for key, df, col in (("day", hlog, "muutos_4h"), ("swing", dlog, "muutos_5pv"), ("long", dlog, "muutos_40pv")):
         pref = CSV_PREFIX[key]
         item = dict(key=key, name=HZ[key]["name"], ahead=HZ[key]["ahead"], logged=int(len(df)),
-                    matured=0, calls=0, hits=0, hit_rate=None, mean_p=None, real_up=None)
+                    matured=0, calls=0, hits=0, hit_rate=None, mean_p=None, real_up=None,
+                    next=next_result(df, key, col))
         if len(df) and col in df and f"{pref}_nousu" in df:
             sub = df[df[col].notna() & df[f"{pref}_nousu"].notna()]
             item["matured"] = int(len(sub))
@@ -1463,6 +1464,25 @@ def tracking_stats(dlog: pd.DataFrame, hlog: pd.DataFrame, added: list) -> dict:
                                       bull=g("lyhyt_nousu"), bear=g("lyhyt_lasku"), p=g("lyhyt_p_nousu"),
                                       chg=g("muutos_5pv")))
     return out
+
+
+def next_result(df: pd.DataFrame, key: str, col: str) -> str | None:
+    """Milloin seuraava kirjattu ennuste ratkeaa (selkokielinen arvio)."""
+    if not len(df) or col not in df:
+        return None
+    pend = df[df[col].isna()]
+    if not len(pend):
+        return None
+    tz = ZoneInfo(TIMEZONE)
+    if key == "day":
+        t0 = pd.to_datetime(pend["kynttila_utc"], utc=True).min()
+        t = (t0 + pd.Timedelta(minutes=HZ["day"]["forward"] * bar_minutes())).tz_convert(tz)
+        today = pd.Timestamp.now(tz=tz).normalize()
+        when = f"klo {t.hour:02d}.{t.minute:02d}" if t.normalize() == today else pvk(t)
+        return f"noin {when}, jos markkina on auki"
+    d0 = pd.to_datetime(pend["pvm"]).min()
+    d = pd.bdate_range(d0, periods=HZ[key]["forward"] + 1)[-1]
+    return f"{d.day}.{d.month}. päätöskurssin jälkeen"
 
 
 def copy_logs(log_dir: Path, out_dir: Path) -> None:
